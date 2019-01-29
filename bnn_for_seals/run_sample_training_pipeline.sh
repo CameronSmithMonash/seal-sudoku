@@ -22,7 +22,7 @@ set -e
     --image-dir sample_data/training/ \
     --label-dir sample_data/labels/ \
     --rotate --distort \
-    --patch-width-height 250
+    --patch-width-height 256
 
 # train for a bit using 256 square patches for training and
 # full resolution for test
@@ -36,7 +36,7 @@ set -e
     --test-image-dir sample_data/test/ \
     --label-dir sample_data/labels/ \
     --pos-weight 5 \
-    --patch-width-height 250 \
+    --patch-width-height 256 \
     --width 1200 --height 1000
 
 # run inference against unlabelled data
