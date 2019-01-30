@@ -11,7 +11,7 @@ import tensorflow as tf
 import util as u
 
 def img_xys_iterator(image_dir, label_dir, batch_size, patch_width_height, distort_rgb,
-                     flip_left_right, random_rotation, repeat, width, height, one_shot=True,
+                     flip_left_right, random_rotation, repeat, width, height,
                      label_rescale=0.5):
   # return dataset of (image, xys_bitmap) for training
 
@@ -100,20 +100,8 @@ def img_xys_iterator(image_dir, label_dir, batch_size, patch_width_height, disto
   if flip_left_right or distort_rgb or random_rotation:
     dataset = dataset.map(augment, num_parallel_calls=8)
 
-  if one_shot:
-    # return just output tensors from one shot, already inited, iterator
-    return (dataset.
-            batch(batch_size).
-            prefetch(1).
-            make_one_shot_iterator().
-            get_next())
-  else:
-    # return output tensors _and_ init op
-    iterator = (dataset.
-                batch(batch_size).
-                prefetch(1).
-                make_initializable_iterator())
-    return (iterator.initializer, iterator.get_next())
+  # NOTE: keras.fit wants the iterator directly (not .get_next())
+  return dataset.batch(batch_size).prefetch(1)
 
 if __name__ == "__main__":
   import argparse
@@ -131,8 +119,8 @@ if __name__ == "__main__":
                       help='relative scale of label bitmap compared to input image')
   parser.add_argument('--distort', action='store_true')
   parser.add_argument('--rotate', action='store_true')
-  parser.add_argument('--width', type=int, default=None, help='input image width. required if --patch-width-height not set.')
-  parser.add_argument('--height', type=int, default=None, help='input image height. required if --patch-width-height not set.')
+  parser.add_argument('--width', type=int, default=768, help='input image width. required if --patch-width-height not set.')
+  parser.add_argument('--height', type=int, default=1024, help='input image height. required if --patch-width-height not set.')
   opts = parser.parse_args()
   print(opts)
 
@@ -140,17 +128,19 @@ if __name__ == "__main__":
 
   sess = tf.Session()
 
-  imgs, xyss = img_xys_iterator(image_dir=opts.image_dir,
-                                label_dir=opts.label_dir,
-                                batch_size=opts.batch_size,
-                                patch_width_height=opts.patch_width_height,
-                                distort_rgb=opts.distort,
-                                flip_left_right=True,
-                                random_rotation=opts.rotate,
-                                repeat=True,
-                                width=opts.width,
-                                height=opts.height,
-                                label_rescale=opts.label_rescale)
+  imgs_xyss = img_xys_iterator(image_dir=opts.image_dir,
+                               label_dir=opts.label_dir,
+                               batch_size=opts.batch_size,
+                               patch_width_height=opts.patch_width_height,
+                               distort_rgb=opts.distort,
+                               flip_left_right=True,
+                               random_rotation=opts.rotate,
+                               repeat=True,
+                               width=opts.width,
+                               height=opts.height,
+                               label_rescale=opts.label_rescale)
+
+  imgs, xyss = imgs_xyss.make_one_shot_iterator().get_next()
 
   for b in range(3):
     img_batch, xys_batch = sess.run([imgs, xyss])
