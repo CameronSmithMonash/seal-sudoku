@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 
-from shutil import copyfile
 import os
 import argparse
+from PIL import Image
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--image_directory', type=str, default="label.db")
+parser.add_argument('--image_directory', type=str, default="all_images_seals/")
 opts = parser.parse_args()
 
 image_directory = opts.image_directory
-directory = "sample_data/"
+directory = "seal_data/"
 
 i = 0
-for image in os.listdir(directory + image_directory):
+for file in os.listdir(directory + image_directory):
+    image = Image.open(directory + image_directory + file)
     if i % 5 == 0:
-        copyfile(directory + image_directory + image, directory + "test/" + image)
-        copyfile(directory + image_directory + image, directory + "unlabelled/" + image)
+        image.save(directory + "test/" + file)
+        image.save(directory + "unlabelled/" + file)
     else:
-        copyfile(directory + image_directory + image, directory + "training/" + image)
+        image.save(directory + "training/" + file)
     i += 1

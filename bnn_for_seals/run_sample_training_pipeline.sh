@@ -1,59 +1,66 @@
 #!/usr/bin/env bash
+
+# this script represents the end to end pipeline from
+# labelling -> training -> various testing / predict methods
+
+# it runs NOWHERE near long enough during training to get a decent
+# result and is included as a smoke test
+
 set -x
 
-rm -rf sample_data/labels/ ckpts/r12 tb/r12 sample_predictions.db
+rm -rf seal_data/labels/ ckpts/r12 tb/r12 sample_predictions.db
 
 set -e
 
-# run labelling UI
-./label_ui.py \
-    --image-dir sample_data/training/ \
-    --label-db sample_data/labels.db \
-    --width 1200 --height 1000
+# note: this requires label.db to be created for seal images. To do this, run seal_label_db.py
+
+# split images into different set, crop and rotate
+./image_set_creator.py --image_directory /all_images_seals/
 
 # materialise label database into bitmaps
 ./materialise_label_db.py \
-    --label-db sample_data/labels.db \
-    --directory sample_data/labels/ \
-    --width 1200 --height 1000
+    --label-db seal_data/labels.db \
+    --directory seal_data/labels/ \
+    --width 768 --height 1024
 
 # generate some 256x236 sample patches of the data.
 ./data.py \
-    --image-dir sample_data/training/ \
-    --label-dir sample_data/labels/ \
+    --image-dir seal_data/training/ \
+    --label-dir seal_data/labels/ \
     --rotate --distort \
     --patch-width-height 256
 
 # train for a bit using 256 square patches for training and
-# full resolution for test
-# note: this is nowhere near enough to get a good result; just
-#       included for end to end testing
+# full resolution for test.
 ./train.py \
-    --run r12 \
-    --steps 100 \
-    --train-steps 10 \
-    --train-image-dir sample_data/training/ \
-    --test-image-dir sample_data/test/ \
-    --label-dir sample_data/labels/ \
-    --pos-weight 5 \
-    --patch-width-height 256 \
-    --width 1200 --height 1000
+--run test10 \
+--train-image-dir seal_data/training/ \
+--label-dir seal_data/labels/ \
+--patch-width-height 480 \
+--base-filter-size 32 \
+--learning-rate 1e-3 \
+--pos-weight 20 \
+--l2 0 \
+--train-steps 1000 \
+--random-rotate \
+--flip-left-right \
+--batch-size 24
 
 # run inference against unlabelled data
 ./predict.py \
-    --run r12 \
-    --image-dir sample_data/unlabelled \
-    --output-label-db sample_predictions.db \
+    --run test10 \
+    --image-dir seal_data/unlabelled \
+    --output-label-db seal_predictions.db \
     --export-pngs predictions
 
 # check loss statistics against training data
 ./test.py \
-    --run r12 \
-    --image-dir sample_data/training/ \
-    --label-dir sample_data/labels/
+    --run test10 \
+    --image-dir seal_data/training/ \
+    --label-db seal_data/labels.db
 
 # check loss statistics against labelled test data
 ./test.py \
-    --run r12 \
-    --image-dir sample_data/test/ \
-    --label-dir sample_data/labels/
+    --run test10 \
+    --image-dir seal_data/test/ \
+    --label-db seal_data/labels.db
