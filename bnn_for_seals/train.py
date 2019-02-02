@@ -15,9 +15,9 @@ import time
 import util as u
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--train-image-dir', type=str, default="sample_data/training/", help="training images")
-parser.add_argument('--test-image-dir', type=str, default="sample_data/test/", help="test images")
-parser.add_argument('--label-dir', type=str, default="sample_data/labels/", help="labels for train/test")
+parser.add_argument('--train-image-dir', type=str, default="seal_data/training/", help="training images")
+parser.add_argument('--test-image-dir', type=str, default="seal_data/test/", help="test images")
+parser.add_argument('--label-dir', type=str, default="seal_data/labels/", help="labels for train/test")
 parser.add_argument('--label-db', type=str, default="label.201802_sample.db",
                     help="label_db for test P/R/F1 stats")
 parser.add_argument('--patch-width-height', type=int, default=None,

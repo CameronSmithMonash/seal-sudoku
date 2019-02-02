@@ -8,59 +8,58 @@
 
 set -x
 
-rm -rf seal_data/labels/ ckpts/r12 tb/r12 sample_predictions.db
+rm -rf sample_data/labels/ ckpts/r12 tb/r12 sample_predictions.db
 
 set -e
 
-# note: this requires label.db to be created for seal images. To do this, run seal_label_db.py
-
-# split images into different set, crop and rotate
-./image_set_creator.py --image_directory /all_images_seals/
+# run labelling UI
+./label_ui.py \
+    --image-dir sample_data/training/ \
+    --label-db sample_data/labels.db \
+    --width 1200 --height 992
 
 # materialise label database into bitmaps
 ./materialise_label_db.py \
-    --label-db seal_data/labels.db \
-    --directory seal_data/labels/ \
-    --width 768 --height 1024
+    --label-db sample_data/labels.db \
+    --directory sample_data/labels/ \
+    --width 1200 --height 992
 
 # generate some 256x236 sample patches of the data.
 ./data.py \
-    --image-dir seal_data/training/ \
-    --label-dir seal_data/labels/ \
+    --image-dir sample_data/training/ \
+    --label-dir sample_data/labels/ \
     --rotate --distort \
     --patch-width-height 256
 
 # train for a bit using 256 square patches for training and
 # full resolution for test.
 ./train.py \
---run test10 \
---train-image-dir seal_data/training/ \
---label-dir seal_data/labels/ \
---patch-width-height 480 \
---base-filter-size 32 \
---learning-rate 1e-3 \
---pos-weight 20 \
---l2 0 \
---train-steps 1000 \
---random-rotate \
---flip-left-right \
---batch-size 24
+    --run r12 \
+    --steps 2 \
+    --train-steps 2 \
+    --batch-size 4 \
+    --train-image-dir sample_data/training/ \
+    --test-image-dir sample_data/test/ \
+    --label-dir sample_data/labels/ \
+    --pos-weight 5 \
+    --patch-width-height 256 \
+    --width 1200 --height 992
 
 # run inference against unlabelled data
 ./predict.py \
-    --run test10 \
-    --image-dir seal_data/unlabelled \
-    --output-label-db seal_predictions.db \
+    --run r12 \
+    --image-dir sample_data/unlabelled \
+    --output-label-db sample_predictions.db \
     --export-pngs predictions
 
 # check loss statistics against training data
 ./test.py \
-    --run test10 \
-    --image-dir seal_data/training/ \
-    --label-db seal_data/labels.db
+    --run r12 \
+    --image-dir sample_data/training/ \
+    --label-db sample_data/labels.db
 
 # check loss statistics against labelled test data
 ./test.py \
-    --run test10 \
-    --image-dir seal_data/test/ \
-    --label-db seal_data/labels.db
+    --run r12 \
+    --image-dir sample_data/test/ \
+    --label-db sample_data/labels.db

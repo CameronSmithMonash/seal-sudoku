@@ -4,12 +4,12 @@ from label_db import LabelDB
 import os
 os.chdir("/home/cam/Documents/PHS3350")
 from utils import best_classifications
-os.chdir("bnn-master2")
+os.chdir("bnn_for_seals")
 
-seal_db = LabelDB(label_db_file='sample_data/labels.db')
+seal_db = LabelDB(label_db_file='seal_data/labels.db')
 seal_db.create_if_required()
 
-files = os.listdir("sample_data/all_images_seals")
+files = os.listdir("seal_data/all_images_seals")
 
 
 # add each coordinate to db
@@ -19,8 +19,8 @@ for row in best_classifications:
         all_coordinates = row[6]
         good_coordinates = []
         for coordinate in all_coordinates:
-            if coordinate[0] <= 1024 and coordinate[1] <= 768:
-                x = coordinate[1]
-                y = 1024 - coordinate[0]
-                good_coordinates.append((x,y))
+            if coordinate[1] <= 992:
+                x = coordinate[0]
+                y = coordinate[1]
+                good_coordinates.append((x, y))
         seal_db.set_labels(img_name, good_coordinates)
