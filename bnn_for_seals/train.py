@@ -140,7 +140,10 @@ while not done:
   # ... test
   stats = test.pr_stats(opts.run, opts.test_image_dir, opts.label_db, opts.connected_components_threshold)
   tag_values = {k: stats[k] for k in ['precision', 'recall', 'f1']}
-  test_summaries_writer.add_summary(u.explicit_summaries({"xent": test_loss}), step)
+  try:
+    test_summaries_writer.add_summary(u.explicit_summaries({"xent": test_loss}), step)
+  except TypeError:
+    pass
   test_summaries_writer.add_summary(u.explicit_summaries(tag_values), step)
   for idx, img in enumerate(stats['debug_imgs']):
     debug_img_summary = u.pil_image_to_tf_summary(img, tag="debug_img_%d" % idx)
