@@ -13,6 +13,9 @@ import tensorflow as tf
 import test
 import time
 import util as u
+import gc
+
+gc.enable()
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--train-image-dir', type=str, default="seal_data/training/", help="training images")
@@ -161,6 +164,7 @@ while not done:
 
   # check if done by steps or time
   step += 1  # TODO: fetch global_step from keras model (?)
+  gc.collect()
   if step >= opts.steps:
     done = True
   if opts.secs is not None:
