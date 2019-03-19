@@ -3,15 +3,6 @@
 # this script represents the end to end pipeline from
 # labelling -> training -> various testing / predict methods
 
-# it runs NOWHERE near long enough during training to get a decent
-# result and is included as a smoke test
-
-set -x
-
-rm -rf seal_data/labels/ ckpts/r12 tb/r12 seal_predictions.db
-
-set -e
-
 # note: this requires label.db to be created for seal images. To do this, run seal_label_db.py
 
 # split images into different set
